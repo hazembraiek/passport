@@ -1,6 +1,6 @@
 const express = require("express");
 const login = require("./access/login");
-const signup = require("./access/login");
+const signup = require("./access/signup");
 const logout = require("./access/logout");
 const router = express.Router();
 

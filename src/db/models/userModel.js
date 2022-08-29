@@ -1,35 +1,20 @@
 const mongoose = require("mongoose");
 // const validator = require("validator");
-// const bcrypt = require("bcryptjs");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 // const crypto = require("crypto");
 // const { parse } = require("path/posix");
 
 const UserSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, "A user must have a name"],
-    unique: true,
-    trim: true,
-  },
   email: {
     type: String,
     required: [true, "A user must have an email"],
     unique: true,
     lowercase: true,
   },
-  photo: {
-    type: String,
-    default: "default.jpg",
-  },
-  role: {
-    type: String,
-    default: "user",
-    enum: ["admin", "user", "guide", "leade-guide"],
-  },
   password: {
     type: String,
     required: [true, "A user must have a password"],
-    minlength: 8,
   },
 });
 
@@ -64,6 +49,30 @@ const UserSchema = new mongoose.Schema({
 //   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 //   return resetToken;
 // };
+/**
+ * A function to campare the encrypted password
+ */
+
+UserSchema.pre("save", function(next){
+  if(!this.isModified("password")) return next();
+  const salt =  bcrypt.genSaltSync(10);
+  const hash =  bcrypt.hashSync(this.password,salt);
+  this.password = hash;
+  next();
+})
+
+UserSchema.methods.generateJWT = (expiresIn) => {
+  const payload = {
+    id:this._id,
+    email:this.email
+  }
+  return jwt.sign(payload,process.env.JWT_SECRET,{expiresIn});
+}
+
+ UserSchema.methods.comparePassword = function (password) {
+  return bcrypt.compareSync(password, this.password)
+}
+
 const User = mongoose.model("User", UserSchema);
 
 module.exports = User;

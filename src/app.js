@@ -10,6 +10,7 @@ const { NotFoundError } = require("./core/apiError");
 const port = process.env.PORT || 3000;
 
 app.use(cors());
+app.use(express.json())
 app.use("/v1", routes);
 
 app.all("*", (req, res, next) => next(new NotFoundError()));
