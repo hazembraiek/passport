@@ -15,7 +15,10 @@ mongoose
   .then(() =>
     console.log(`DB connected (new start) to: : ${process.env.MONGODB_URL}`)
   )
-  .catch((err) => console.log("DB connection error"));
+  .catch((err) =>{
+     console.log("DB connection error")
+     process.exit(1);  
+  });
 
 mongoose.connection.on("connected", () => {
   console.log("Mongoose default connection open to " + dbURL);
