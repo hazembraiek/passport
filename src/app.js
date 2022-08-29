@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-require("dotenv").config();
+//require("dotenv").config();
 require("./db/connectDB");
 const routes = require("./routes/v1/index");
 const cors = require("cors");
@@ -19,3 +19,4 @@ app.use(errorHandler);
 app.listen(port, () => {
   console.log(`app run on port ${port}`);
 });
+
