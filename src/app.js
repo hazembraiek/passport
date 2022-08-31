@@ -21,3 +21,4 @@ app.listen(port, () => {
   console.log(`app run on port ${port}`);
 });
 
+module.exports = app;

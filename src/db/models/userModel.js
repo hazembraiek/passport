@@ -8,8 +8,6 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
   },
-  passwordResetToken: String,
-  passwordResetExpires: Date,
   password: {
     type: String,
     required: [true, "A user must have a password"],

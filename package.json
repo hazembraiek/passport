@@ -19,11 +19,14 @@
   "homepage": "https://github.com/hazembraiek/passport#readme",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "chai": "^4.3.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
+    "mocha": "^10.0.0",
     "mongoose": "^5.13.15",
     "nodemailer": "^6.7.8",
-    "nodemon": "^2.0.19"
+    "nodemon": "^2.0.19",
+    "supertest": "^6.2.4"
   }
 }
