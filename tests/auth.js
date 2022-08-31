@@ -10,7 +10,7 @@ describe("Test Login",() => {
         const response = await server.post("/v1/login").send(emptyBody);
         expect(response.status).equal(404);
         expect(response.body).to.have.property("message");
-        expect(response.body.message).to.equal("Account does not exist");
+        expect(response.body.message).to.equal("account does not exist");
     });
 
     it("should send error when email is only sent",async () => {
@@ -23,7 +23,7 @@ describe("Test Login",() => {
                                .send(nonExistingUser);
         expect(response.status).equal(404);
         expect(response.body).to.have.property("message");
-        expect(response.body.message).to.equal("Account does not exist");
+        expect(response.body.message).to.equal("account does not exist");
     });
     
     it("should send error when password is only sent",async () => {
@@ -36,7 +36,7 @@ describe("Test Login",() => {
                                .send(nonExistingUser);
         expect(response.status).equal(404);
         expect(response.body).to.have.property("message");
-        expect(response.body.message).to.equal("Account does not exist");
+        expect(response.body.message).to.equal("account does not exist");
     });
     it("should login",async () => {
         const server = await request("http://localhost:3000");
