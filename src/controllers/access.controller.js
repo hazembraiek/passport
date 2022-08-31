@@ -1,33 +1,104 @@
-const UserModel = require("../db/models/userModel");
-const apiError = require("../core/apiError")
+const { UserModel,KeyStoreModel } = require("../db/models");
+const apiError  = require("../core/apiError");
 const catchAsync = require("../utils/catchAsync");
+const sendMail  = require("../utils/mailSender");
+const { createAccessToken, verifyToken, comparePassword,createPasswordResetToken } = require("../auth/authutil");
 
-const getUser = async (email,password) => {
-  /*user must say who they are*/
-  const existingUser = await UserModel.findOne({email});
-  if(!existingUser || !existingUser.comparePassword(password)){
-      throw new apiError.ValidationError("invalid email or password");
-  }
-  return existingUser;
+const resetLink = (token) => `${process.env.RESET_LINK}?token=${token}`
+const ACCESS_TOKEN_EXPIRES = Number(process.env.ACCESS_TOKEN_EXPIRES) || 3600;
+const RESET_LINK_EXPIRES = Number(process.env.RESET_LINK_EXPIRES) || 3600;
+
+
+const fetchOneOr404 = async (model,query,message="model not found") => {
+  /*get one or 404*/
+  const exist = await model.findOne(query);
+  if(!exist)
+      throw new apiError.ValidationError(message)
+  return exist
 }
 
 
-exports.login = catchAsync(async (req, res, next) => {
-    /*all the data coming to controller must be verified by
-      middlewares*/
+const createAccessTokens = async (payload) => {
+    const access_token = createAccessToken({
+      expiresIn:ACCESS_TOKEN_EXPIRES,
+      secret:process.env.JWT_SECRET,
+      payload
+    });
+    const refresh_token = createAccessToken({  //never expires
+      secret:process.env.REFRESH_TOKEN_SECRET,
+      payload
+    });
+
+    await KeyStoreModel.create({
+      client:payload._id,
+      key:refresh_token,
+    });
+
+    return {access_token,refresh_token}
+}
+
+exports.login = catchAsync(async (req, res) => {
     const { email, password } = req.body;
-    const user = await getUser(email,password);
-    const access_token = user.generateJWT(3600);
-    res.status(200).json({
+    const user = await fetchOneOr404(UserModel,{email},"account does not exist");
+    if(!comparePassword(user._doc.password,password))
+      throw new apiError.ValidationError("invalid password or email");
+    const {access_token,refresh_token} = await createAccessTokens(user._doc);
+    res.json({
       access_token,   
-      expiresIn:3600,
+      refresh_token,
+      expiresIn:ACCESS_TOKEN_EXPIRES,
     });
 });
 
 
-exports.signup = catchAsync(async (req, res, next) => {
+exports.refreshToken = catchAsync(async (req,res) => {
+  const { token:refreshToken } = req.body;
+  verifyToken(refreshToken);
+  const tokenExist = await fetchOneOr404(KeyStoreModel,{key:refreshToken});
+  const access_token = createAccessToken({
+    expiresIn:ACCESS_TOKEN_EXPIRES,
+    secret:process.env.JWT_SECRET,
+    payload:tokenExist._doc.client._doc
+  });
+  res.json({
+    access_token
+  })
+});
+
+exports.forgotPassword = catchAsync(async (req,res) => {
+  const { email } = req.body;
+  const existingUser = await fetchOneOr404(UserModel,{email});
+  const passwordResetToken = createPasswordResetToken(); //must be unique [TODO]
+  await KeyStoreModel.create({
+    client:existingUser._id,
+    key:passwordResetToken,
+    expires:Date.now() + RESET_LINK_EXPIRES 
+  })
+  await sendMail({
+      to:email,
+      subject:"password reset",
+      html:`<pre>your password reset link: ${resetLink(passwordResetToken)}</pre>
+            <span>Rayen</span>
+      `
+  });
+  res.json({
+    data:"password reset link were sent check your mail",
+  })
+});
+
+exports.resetPassoword = catchAsync(async (req,res) => {
+  const { token } = req.query;
+  const { password } = req.body;
+  const tokenExists = await fetchOneOr404(KeyStoreModel,{key:token},"token invalid or expired");
+  const user = await fetchOneOr404(UserModel,{_id:tokenExists.client});
+  user.password = password;
+  await user.save();
+  await tokenExists.delete();
+  res.json({data:"your password has ben updated"});
+});
+
+exports.signup = catchAsync(async (req, res) => {
     const newUser = await UserModel.create(req.body)
-    console.log(newUser)
     res.json({data:newUser});
 });
 

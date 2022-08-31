@@ -4,6 +4,7 @@ const {
   ValidationFailResponse,
   InternelResponse,
   AuthFailureResponse,
+  InternalResponse
 } = require("./errorResponse");
 
 const ErrorType = {
@@ -37,6 +38,8 @@ class ApiError extends Error {
         return new BadRequestResponse(err.message).send(res);
       case ErrorType.VALIDATION_FAIL:
         return new ValidationFailResponse(err.message).send(res);
+      case ErrorType.INTERNAL:
+        return new InternalResponse(err.message).send(res);
       default: {
         let message = err.message;
         if (process.env.NODE_ENV === "production")
@@ -74,6 +77,11 @@ class UnauthorizedError extends ApiError {
     super(ErrorType.UNAUTHORIZED, message);
   }
 }
+class InternalError extends ApiError{
+  constructor(message = "internal server error"){
+    super(ErrorType.INTERNAL,message)
+  }
+}
 
 module.exports = {
   ApiError,
@@ -82,4 +90,5 @@ module.exports = {
   BadRequestError,
   UnauthorizedError,
   ValidationError,
+  InternalError
 };
