@@ -1,28 +1,48 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-const UserSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: [true, "A user must have an email"],
-    unique: true,
-    lowercase: true,
+const UserSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "A user must have a name"],
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: [true, "A user must have an email"],
+      unique: true,
+      lowercase: true,
+    },
+    // passwordResetToken: String,
+    // passwordResetExpires: Date,
+    password: {
+      type: String,
+      required: [true, "A user must have a password"],
+    },
+    verified: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
   },
-  passwordResetToken: String,
-  passwordResetExpires: Date,
-  password: {
-    type: String,
-    required: [true, "A user must have a password"],
-  },
+  {
+    timestamps: true,
+  }
+);
+
+UserSchema.pre(/^find/, function (next) {
+  this.find({ verified: { $ne: true } });
+  next();
 });
 
-UserSchema.pre("save", function(next){
-  if(!this.isModified("password")) return next();
-  const salt =  bcrypt.genSaltSync(10);
-  const hash =  bcrypt.hashSync(this.password,salt);
+UserSchema.pre("save", function (next) {
+  if (!this.isModified("password")) return next();
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync(this.password, salt);
   this.password = hash;
   next();
-})
+});
 
 const User = mongoose.model("User", UserSchema);
 
