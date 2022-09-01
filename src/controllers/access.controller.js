@@ -3,7 +3,7 @@ const apiError = require("../core/apiError");
 const catchAsync = require("../utils/catchAsync");
 const sendMail = require("../utils/mailSender");
 const userRepository = require("./../db/repository/userRepo");
-const UserVerificationRepository = require("./../db/repository/userVerificationRepo");
+const keyStoreRepository = require("../db/repository/KeyStoreRepo");
 const {
   createAccessToken,
   verifyToken,
@@ -13,6 +13,8 @@ const {
   compareStringAndHash,
 } = require("../auth/authutil");
 const { generateCodeVerification } = require("../utils/generateCode");
+const { sendEmail } = require("../utils/sendEmail");
+const { signup } = require("../routes/v1/schema/userSchema");
 
 const resetLink = (token) => `${process.env.RESET_LINK}?token=${token}`;
 const ACCESS_TOKEN_EXPIRES = Number(process.env.ACCESS_TOKEN_EXPIRES) || 3600;
@@ -20,7 +22,7 @@ const RESET_LINK_EXPIRES = Number(process.env.RESET_LINK_EXPIRES) || 3600;
 
 const fetchOneOr404 = async (model, query, message = "model not found") => {
   /*get one or 404*/
-  const exist = await model.findOne(query);
+  const exist = await UserModel.findOne(query);
   if (!exist) throw new apiError.ValidationError(message);
   return exist;
 };
@@ -52,7 +54,7 @@ exports.login = catchAsync(async (req, res) => {
     { email },
     "account does not exist"
   );
-  if (!comparePassword(user._doc.password, password))
+  if (!compareStringAndHash(password, user._doc.password))
     throw new apiError.ValidationError("invalid password or email");
   const { access_token, refresh_token } = await createAccessTokens(user._doc);
   res.json({
@@ -85,13 +87,15 @@ exports.forgotPassword = catchAsync(async (req, res) => {
     key: passwordResetToken,
     expires: Date.now() + RESET_LINK_EXPIRES,
   });
-  await sendMail({
-    to: email,
-    subject: "password reset",
-    html: `<pre>your password reset link: ${resetLink(passwordResetToken)}</pre>
-            <span>Rayen</span>
-      `,
-  });
+
+  sendEmail(email, "", resetLink(passwordResetToken));
+  // await sendMail({
+  //   to: email,
+  //   subject: "password reset",
+  //   html: `<pre>your password reset link: ${resetLink(passwordResetToken)}</pre>
+  //           <span>Rayen</span>
+  //     `,
+  // });
   res.json({
     data: "password reset link were sent check your mail",
   });
@@ -117,8 +121,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   const user = await userRepository.getUserByEmail(email);
   if (user) throw new apiError.BadRequestError("user already registered");
 
-  const passwordHash = await hashString(10, password);
-
+  const passwordHash = await hashString(password);
   const createdUser = await userRepository.createUser({
     name,
     email,
@@ -126,16 +129,8 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
 
   const data = { _id: createdUser._id, email: createdUser.email };
-  const code = generateCodeVerification();
-  await UserVerificationRepository.createVerification(data._id, code);
 
-  await sendMail({
-    to: email,
-    subject: "code verification",
-    html: `<p>you code is : ${code} , this code expires in 1 hour </p>
-            <h2>Brayek hazem</h2>
-      `,
-  });
+  sendCodeVerification(data._id, email);
 
   res.status(200).json({ status: "success", data });
 });
@@ -146,24 +141,54 @@ exports.logout = async (req, res, next) => {
 
 exports.CodeVerification = catchAsync(async (req, res, next) => {
   const { userId, code } = req.body;
-  const userVerificationRecords =
-    await UserVerificationRepository.getVerification(userId);
 
-  if (userVerificationRecords.length < 0)
-    throw new apiError.BadRequestError("");
+  const user = await userRepository.findById(userId);
+  if (user) throw new apiError.BadRequestError("user already verified ");
 
-  const CodeVerified = userVerificationRecords.find((verOpt) =>
-    compareStringAndHash(code, verOpt.codeVerification)
+  const userVerificationRecords = await keyStoreRepository.getVerification(
+    userId
   );
 
-  if (CodeVerified) {
+  if (userVerificationRecords.length == 0)
+    throw new apiError.BadRequestError(
+      "account record doesn't exist or user not found "
+    );
+
+  const CodeVerified = userVerificationRecords.find((verOpt) =>
+    compareStringAndHash(code, verOpt.key)
+  );
+
+  if (CodeVerified && CodeVerified.expires > Date.now()) {
     await userRepository.activeUser(userId);
+    await keyStoreRepository.deleteExpiresCodes(userId);
+  } else if (CodeVerified && CodeVerified.expires < Date.now()) {
+    throw new apiError.BadRequestError(
+      "code has expired , please request again"
+    );
   } else {
     throw new apiError.BadRequestError("invalid code verification");
-    // await UserVerificationRepository.deleteVerification(userId);
   }
 
   res
     .status(200)
     .json({ status: "success", message: "user email verified successfully" });
 });
+
+exports.resendCode = catchAsync(async (req, res, next) => {
+  const { userId, email } = req.body;
+
+  const user = await userRepository.getUserByEmail(email);
+  if (user) throw new apiError.BadRequestError("user already verified");
+
+  sendCodeVerification(userId, email);
+
+  res
+    .status(200)
+    .json({ status: "success", message: "code resended successfully" });
+});
+
+const sendCodeVerification = async (userId, email) => {
+  const code = generateCodeVerification();
+  await keyStoreRepository.createVerification(userId, code);
+  sendEmail(email, "signup", code);
+};

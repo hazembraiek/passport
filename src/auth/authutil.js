@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const { ApiError } = require("../core/apiError");
-
+const { verify } = require("jsonwebtoken");
 const {
   AuthFailureError,
   TokenExpiredError,
@@ -47,6 +47,6 @@ exports.compareStringAndHash = (string, hashS) => {
   return bcrypt.compareSync(string, hashS);
 };
 
-exports.hashString = (encrypted, string) => {
-  return bcrypt.hash(string, encrypted);
+exports.hashString = (string) => {
+  return bcrypt.hash(string, 10);
 };

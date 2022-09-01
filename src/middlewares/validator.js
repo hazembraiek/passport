@@ -22,7 +22,13 @@ exports.ValidationSource = {
 //     return value;
 //   }, "Authorization Header Validation");
 
-module.exports =
+exports.JoiObjectId = () =>
+  Joi.string().custom((value, helpers) => {
+    if (!Types.ObjectId.isValid(value)) return helpers.error("any.invalid");
+    return value;
+  }, "Object Id Validation");
+
+exports.validator =
   (schema, source = this.ValidationSource.BODY) =>
   (req, res, next) => {
     const validationOptions = {
@@ -45,9 +51,3 @@ module.exports =
       next(error);
     }
   };
-
-exports.JoiObjectId = () =>
-  Joi.string().custom((value, helpers) => {
-    if (!Types.ObjectId.isValid(value)) return helpers.error("any.invalid");
-    return value;
-  }, "Object Id Validation");

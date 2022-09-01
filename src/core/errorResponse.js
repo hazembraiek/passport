@@ -46,6 +46,11 @@ class AuthFailureResponse extends ApiResponse {
     super(ResponseStatus.UNAUTHORIZED, "fail", message);
   }
 }
+class InvalidAccessToken extends ApiResponse {
+  constructor(message = "Invalid Access Token") {
+    super(ResponseStatus.UNAUTHORIZED, "fail", message);
+  }
+}
 
 module.exports = {
   BadRequestResponse,
@@ -53,4 +58,5 @@ module.exports = {
   ValidationFailResponse,
   InternelResponse,
   AuthFailureResponse,
+  InvalidAccessToken,
 };

@@ -7,7 +7,7 @@ const cors = require("cors");
 const errorHandler = require("./core/errorHandler");
 const { NotFoundError } = require("./core/apiError");
 const { swaggerDocs } = require("./utils/swagger");
-
+const bodyParser = require("body-parser");
 const port = process.env.PORT || 3000;
 
 swaggerDocs(app);

@@ -4,7 +4,7 @@ const {
   ValidationFailResponse,
   InternelResponse,
   AuthFailureResponse,
-  InternalResponse
+  InvalidAccessToken,
 } = require("./errorResponse");
 
 const ErrorType = {
@@ -38,8 +38,12 @@ class ApiError extends Error {
         return new BadRequestResponse(err.message).send(res);
       case ErrorType.VALIDATION_FAIL:
         return new ValidationFailResponse(err.message).send(res);
-      case ErrorType.INTERNAL:
-        return new InternalResponse(err.message).send(res);
+      case ErrorType.BAD_TOKEN:
+      case ErrorType.TOKEN_EXPIRED:
+      case ErrorType.UNAUTHORIZED:
+        return new AuthFailureResponse(err.message).send(res);
+      case ErrorType.ACCESS_TOKEN:
+        return new InvalidAccessToken(err.message).send(res);
       default: {
         let message = err.message;
         if (process.env.NODE_ENV === "production")
@@ -77,9 +81,26 @@ class UnauthorizedError extends ApiError {
     super(ErrorType.UNAUTHORIZED, message);
   }
 }
-class InternalError extends ApiError{
-  constructor(message = "internal server error"){
-    super(ErrorType.INTERNAL,message)
+class AuthFailureError extends ApiError {
+  constructor(message = "YOU NOT LOGGED IN") {
+    super(ErrorType.UNAUTHORIZED, message);
+  }
+}
+
+class BadTokenError extends ApiError {
+  constructor(message = "Token is not valid") {
+    super(ErrorType.BAD_TOKEN, message);
+  }
+}
+
+class TokenExpiredError extends ApiError {
+  constructor(message = "Token is expired") {
+    super(ErrorType.TOKEN_EXPIRED, message);
+  }
+}
+class AccessTokenError extends ApiError {
+  constructor(message = "Invalid access token") {
+    super(ErrorType.TOKEN_EXPIRED, message);
   }
 }
 
@@ -90,5 +111,8 @@ module.exports = {
   BadRequestError,
   UnauthorizedError,
   ValidationError,
-  InternalError
+  AuthFailureError,
+  BadTokenError,
+  TokenExpiredError,
+  AccessTokenError,
 };

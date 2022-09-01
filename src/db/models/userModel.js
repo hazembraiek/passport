@@ -14,8 +14,6 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
-    // passwordResetToken: String,
-    // passwordResetExpires: Date,
     password: {
       type: String,
       required: [true, "A user must have a password"],
@@ -32,17 +30,17 @@ const UserSchema = new mongoose.Schema(
 );
 
 UserSchema.pre(/^find/, function (next) {
-  this.find({ verified: { $ne: true } });
+  this.find({ verified: { $ne: false } });
   next();
 });
 
-UserSchema.pre("save", function (next) {
-  if (!this.isModified("password")) return next();
-  const salt = bcrypt.genSaltSync(10);
-  const hash = bcrypt.hashSync(this.password, salt);
-  this.password = hash;
-  next();
-});
+// UserSchema.pre("save", function (next) {
+//   if (!this.isModified("password")) return next();
+//   const salt = bcrypt.genSaltSync(10);
+//   const hash = bcrypt.hashSync(this.password, salt);
+//   this.password = hash;
+//   next();
+// });
 
 const User = mongoose.model("User", UserSchema);
 
