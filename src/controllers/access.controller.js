@@ -88,14 +88,13 @@ exports.forgotPassword = catchAsync(async (req, res) => {
     expires: Date.now() + RESET_LINK_EXPIRES,
   });
 
-  sendEmail(email, "", resetLink(passwordResetToken));
-  // await sendMail({
-  //   to: email,
-  //   subject: "password reset",
-  //   html: `<pre>your password reset link: ${resetLink(passwordResetToken)}</pre>
-  //           <span>Rayen</span>
-  //     `,
-  // });
+  await sendMail({
+    to: email,
+    subject: "password reset",
+    html: `<pre>your password reset link: ${resetLink(passwordResetToken)}</pre>
+            <span>Rayen</span>
+      `,
+  });
   res.json({
     data: "password reset link were sent check your mail",
   });
