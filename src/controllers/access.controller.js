@@ -1,24 +1,16 @@
 const apiError = require("../core/apiError");
 const catchAsync = require("../utils/catchAsync");
 const sendMail = require("../utils/mailSender");
-const { UserVerificationRepository, userRepository,KeyStoreRepo } = require("../db/repository");
-
-const {
-  createAccessToken,
-  verifyToken,
-  comparePassword,
-  createPasswordResetToken,
-  hashString,
-  compareStringAndHash,
-} = require("../auth/authutil");
+const { UserVerificationRepository, UserRepository,KeyStoreRepo } = require("../db/repository");
 const authUtil = require("../auth/authutil");
-
 const { generateCodeVerification } = require("../utils/generateCode");
 
 
 const resetLink = (token) => `${process.env.RESET_LINK}?token=${token}`;
 const ACCESS_TOKEN_EXPIRES = Number(process.env.ACCESS_TOKEN_EXPIRES) || 3600;
 const RESET_LINK_EXPIRES = Number(process.env.RESET_LINK_EXPIRES) || 3600;
+
+
 
 const fetchOneOr404 = async (model, query, message = "model not found") => {
   /*get one or 404*/
@@ -48,12 +40,15 @@ const createAccessTokens = async (payload) => {
 exports.login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
   const user = await fetchOneOr404(
-    UserModel,
+    UserRepository,
     { email },
     "account does not exist"
   );
+ 
   if (!authUtil.comparePassword(user._doc.password, password))
     throw new apiError.ValidationError("invalid password or email");
+  
+  
   const { access_token, refresh_token } = await createAccessTokens(user._doc);
   res.json({
     access_token,
@@ -64,7 +59,7 @@ exports.login = catchAsync(async (req, res) => {
 
 exports.refreshToken = catchAsync(async (req, res) => {
   const { token: refreshToken } = req.body;
-  authUtil.verifyToken(refreshToken);
+  authUtil.verifyToken(refreshToken,process.env.REFRESH_TOKEN_SECRET);
   const tokenExist = await fetchOneOr404(KeyStoreRepo,{key:refreshToken},"token not found");
   const access_token = authUtil.createAccessToken({
     expiresIn: ACCESS_TOKEN_EXPIRES,
@@ -79,7 +74,7 @@ exports.refreshToken = catchAsync(async (req, res) => {
 
 exports.forgotPassword = catchAsync(async (req, res) => {
   const { email } = req.body;
-  const existingUser = await fetchOneOr404(userRepository,{email},"Account does not exist");
+  const existingUser = await fetchOneOr404(UserRepository,{email},"Account does not exist");
   const passwordResetToken = authUtil.createPasswordResetToken(); //must be unique [TODO]
   await KeyStoreRepo.create({
     client:existingUser._id,
@@ -92,20 +87,21 @@ exports.forgotPassword = catchAsync(async (req, res) => {
     html: `<pre>your password reset link: ${resetLink(passwordResetToken)}</pre>
             <span>Rayen</span>
       `,
+    text:resetLink(passwordResetToken)
   });
   res.json({
     message:"password reset link were sent check your mail",
   })
-
 });
 
 exports.resetPassoword = catchAsync(async (req, res) => {
   const { token } = req.query;
   const { password } = req.body;
   const tokenExists = await fetchOneOr404(KeyStoreRepo,{key:token},"token invalid or expired");
-  const user = await fetchOneOr404(userRepository,{_id:tokenExists.client});
+ 
+  const user = await fetchOneOr404(UserRepository,{_id:tokenExists.client});
   user.password = password;
-  await user.save();
+  await user.save({validateBeforeSave:false});
   await tokenExists.delete();
   res.json({ data: "your password has ben updated" });
 });
@@ -113,12 +109,12 @@ exports.resetPassoword = catchAsync(async (req, res) => {
 
 exports.signup = catchAsync(async (req, res, next) => {
   const { name, email, password } = req.body;
-  const user = await userRepository.getUserByEmail(email);
+  const user = await UserRepository.getUserByEmail(email);
   if (user) throw new apiError.BadRequestError("user already registered");
 
   const passwordHash = await authUtil.hashString(10, password);
 
-  const createdUser = await userRepository.createUser({
+  const createdUser = await UserRepository.createUser({
     name,
     email,
     password: passwordHash,
@@ -156,7 +152,7 @@ exports.CodeVerification = catchAsync(async (req, res, next) => {
   );
 
   if (CodeVerified) {
-    await userRepository.activeUser(userId);
+    await UserRepository.activeUser(userId);
   } else {
     throw new apiError.BadRequestError("invalid code verification");
     // await UserVerificationRepository.deleteVerification(userId);
@@ -166,3 +162,29 @@ exports.CodeVerification = catchAsync(async (req, res, next) => {
     .status(200)
     .json({ status: "success", message: "user email verified successfully" });
 });
+
+
+/*
+  Login:
+    -getUser
+    -retutn access token refresh token
+  refresh token
+    -verify refresh token
+    -return new access token
+  forgot password
+    -getUser
+    -send reset link
+  reset password:
+    -verify reset token
+    -set new password
+  class LocalAuth{
+      getUser();
+      refreshAccessToken();
+      sendResetLinkWithEmail();
+      sendResetLinkWithPhone();
+      verifyToken();
+      updateNewPassword;
+  }
+*/
+
+
