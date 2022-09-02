@@ -49,7 +49,7 @@ const createAccessTokens = async (payload:any) => {
     return {access_token,refresh_token}
 }
 
-export const login = catchAsync(async (req: Request, res: ResponseMIMEType,next:NextFunction) => {
+export const login = catchAsync(async (req: Request, res: ResponseMIMEType)  => {
   const { email, password } = req.body;
   const user = await fetchOneOr404(
     userRepository,
