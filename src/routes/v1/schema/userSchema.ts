@@ -1,6 +1,6 @@
-const Joi = require("joi");
+import Joi from "joi";
 
-exports.signup = Joi.object({
+export const signupValidator = Joi.object({
   name: Joi.string().trim().min(1).required(),
   email: Joi.string().email().required(),
   password: Joi.string().min(8).alphanum().required(),

@@ -18,13 +18,14 @@ mongoose
   )
   .catch((err) =>{
      console.log("DB connection error")
+
   });
 
 mongoose.connection.on("connected", () => {
   console.log("Mongoose default connection open to " + dbURL);
 });
 
-mongoose.connection.on("error", (err) => {
+mongoose.connection.on("error", (err: any) => {
   console.log("Mongoose default connection error: " + err);
 });
 

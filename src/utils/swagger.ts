@@ -1,7 +1,8 @@
-const swaggerJsdoc = require("swagger-jsdoc");
-const swaggerUi = require("swagger-ui-express");
+import express, { Request, Response } from "express";
+import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
 
-const options = {
+const SwaggerOptions: any = {
   definition: {
     openapi: "3.0.0",
     info: {
@@ -24,20 +25,20 @@ const options = {
     ],
   },
   apis: [
-    "./src/routes/v1/schema/*.js",
+    "./src/routes/v1/schema/*.ts",
     "./src/routes/v1/*.js",
-    "./src/routes/v1/access/*.js",
+    "./src/routes/v1/access/*.ts",
   ],
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+const swaggerSpec = swaggerJsdoc(SwaggerOptions);
 
-module.exports.swaggerDocs = (app) => {
+export const swaggerDocs = (app) => {
   // Swagger page
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   // Docs in JSON format
-  app.get("/docs.json", (req, res) => {
+  app.get("/docs.json", (req: Request, res: Response) => {
     res.setHeader("Content-Type", "application/json");
     res.send(swaggerSpec);
   });
