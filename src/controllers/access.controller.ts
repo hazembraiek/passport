@@ -17,6 +17,7 @@ import { BadRequestError, ValidationError,NotFoundError } from "../core/apiError
 import { ObjectId } from "mongoose";
 import User from "../db/models/userModel";
 import KeyStore from "../db/models/KeyStore";
+import { ResponseMIMEType } from "aws-sdk/clients/sagemaker";
 
 const resetLink = (token: string): string =>
    `${process.env.RESET_LINK}?token=${token}`;
@@ -48,7 +49,7 @@ const createAccessTokens = async (payload:any) => {
     return {access_token,refresh_token}
 }
 
-export const login = catchAsync(async (req: Request, res: Response) => {
+export const login = catchAsync(async (req: Request, res: ResponseMIMEType,next:NextFunction) => {
   const { email, password } = req.body;
   const user = await fetchOneOr404(
     userRepository,
