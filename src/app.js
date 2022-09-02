@@ -21,5 +21,9 @@ app.listen(port, () => {
   console.log(`app run on port ${port}`);
 });
 
+process.on('uncaughtException', (e) => {
+  console.log(e);
+});
+
 module.exports = app;
 

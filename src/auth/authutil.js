@@ -24,15 +24,16 @@ exports.createAccessToken = ({ payload, expiresIn, secret }) => {
   return access_token;
 };
 
-exports.verifyToken = async (token) => {
-  const secret = process.env.JWT_SECRET;
-  try {
-    return await promisify(verify)(token, secret);
-  } catch (e) {
-    if (e && e.name === "TokenExpiredError") throw new TokenExpiredError();
-    throw new BadTokenError(e.message);
+
+exports.verifyToken = (token,secret) => {
+  try{
+    return jwt.verify(token,secret);
+  }catch(err){
+    if (err && err.name === 'TokenExpiredError') throw new Error("token has been expired");
+    console.log(err)
+    throw new Error("bad token");
   }
-};
+}
 
 exports.createPasswordResetToken = (expiresIn) => {
   const randomBytes = crypto.randomBytes(32).toString("hex");

@@ -1,9 +1,9 @@
 const KeyStoreRepo = require("./keyStore.repo");
-const UserRepository = require("./user.repo");
+const UserRepository = require("./userRepo");
 const UserVerificationRepository = require("./userVerificationRepo");
  
 module.exports = {
     KeyStoreRepo,
     UserVerificationRepository,
-    UserVerificationRepository,
+    UserRepository,
 }

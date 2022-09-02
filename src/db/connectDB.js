@@ -17,7 +17,6 @@ mongoose
   )
   .catch((err) =>{
      console.log("DB connection error")
-     process.exit(1);  
   });
 
 mongoose.connection.on("connected", () => {
@@ -30,4 +29,12 @@ mongoose.connection.on("error", (err) => {
 
 mongoose.connection.on("disconnected", () => {
   console.log("Mongoose default connection disconnected");
+  
 });
+
+process.on("SIGINT",() => {
+  mongoose.connection.close(() => {
+    console.log('Mongoose default connection disconnected through app termination');
+    process.exit(0);
+  });
+})
