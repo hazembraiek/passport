@@ -4,8 +4,6 @@ const { UserRepository } = require("../../../src/db/repository");
 const { MongoMemoryServer } =  require("mongodb-memory-server");
 const app = require("../../../src/app");
 
-
-
 //mock send mail function
 jest.mock("../../../src/utils/mailSender.js",() => {
     return jest.fn((mailOptions) => global.RESET_LINK = mailOptions.text.split("/").pop());

@@ -10,6 +10,7 @@ const options = {
 
 const dbURL = process.env.MONGODB_URL;
 
+
 mongoose
   .connect(dbURL, options)
   .then(() =>
@@ -32,9 +33,3 @@ mongoose.connection.on("disconnected", () => {
   
 });
 
-process.on("SIGINT",() => {
-  mongoose.connection.close(() => {
-    console.log('Mongoose default connection disconnected through app termination');
-    process.exit(0);
-  });
-})
