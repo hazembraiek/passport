@@ -1,7 +1,16 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+import { model, Schema, Document } from "mongoose";
+import bcrypt from "bcryptjs";
 
-const UserSchema = new mongoose.Schema(
+export default interface User extends Document {
+  name: string;
+  email: string;
+  password: string;
+  verified?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const UserSchema = new Schema(
   {
     name: {
       type: String,
@@ -29,19 +38,9 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
-UserSchema.pre(/^find/, function (next) {
+UserSchema.pre(/^find/, function (next): void {
   this.find({ verified: { $ne: false } });
   next();
 });
 
-// UserSchema.pre("save", function (next) {
-//   if (!this.isModified("password")) return next();
-//   const salt = bcrypt.genSaltSync(10);
-//   const hash = bcrypt.hashSync(this.password, salt);
-//   this.password = hash;
-//   next();
-// });
-
-const User = mongoose.model("User", UserSchema);
-
-module.exports = User;
+export const UserModel = model<User>("User", UserSchema);

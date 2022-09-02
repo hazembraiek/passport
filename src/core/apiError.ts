@@ -1,33 +1,34 @@
-const {
+import { Response } from "express";
+import {
   BadRequestResponse,
   NotFoundResponse,
   ValidationFailResponse,
   InternelResponse,
   AuthFailureResponse,
   InvalidAccessToken,
-} = require("./errorResponse");
+} from "./errorResponse";
 
-const ErrorType = {
-  BAD_TOKEN: "BadTokenError",
-  TOKEN_EXPIRED: "TokenExpiredError",
-  UNAUTHORIZED: "AuthFailureError",
-  ACCESS_TOKEN: "AccessTokenError",
-  INTERNAL: "InternalError",
-  NOT_FOUND: "NotFoundError",
-  NO_ENTRY: "NoEntryError",
-  NO_DATA: "NoDataError",
-  BAD_REQUEST: "BadRequestError",
-  FORBIDDEN: "ForbiddenError",
-  VALIDATION_FAIL: "ValidationFail",
-};
+enum ErrorType {
+  BAD_TOKEN = "BadTokenError",
+  TOKEN_EXPIRED = "TokenExpiredError",
+  UNAUTHORIZED = "AuthFailureError",
+  ACCESS_TOKEN = "AccessTokenError",
+  INTERNAL = "InternalError",
+  NOT_FOUND = "NotFoundError",
+  NO_ENTRY = "NoEntryError",
+  NO_DATA = "NoDataError",
+  BAD_REQUEST = "BadRequestError",
+  FORBIDDEN = "ForbiddenError",
+  VALIDATION_FAIL = "ValidationFail",
+}
 
-class ApiError extends Error {
-  constructor(type, message = "error") {
-    super(message);
-    this.type = type;
+export class ApiError extends Error {
+  constructor(public type: ErrorType, public message: string = "error") {
+    super(type);
+    // this.type = type;
   }
 
-  static handle(err, res) {
+  public static handle(err: ApiError, res: Response): Response {
     switch (err.type) {
       case ErrorType.UNAUTHORIZED:
         return new AuthFailureResponse(err.message).send(res);
@@ -54,65 +55,52 @@ class ApiError extends Error {
   }
 }
 
-class BadRequestError extends ApiError {
+export class BadRequestError extends ApiError {
   constructor(message = "Bad Request") {
     super(ErrorType.BAD_REQUEST, message);
   }
 }
 
-class NotFoundError extends ApiError {
+export class NotFoundError extends ApiError {
   constructor(message = "Not Found") {
     super(ErrorType.NOT_FOUND, message);
   }
 }
 
-class NoDataError extends ApiError {
+export class NoDataError extends ApiError {
   constructor(message = "No data available") {
     super(ErrorType.NO_DATA, message);
   }
 }
-class ValidationError extends ApiError {
+export class ValidationError extends ApiError {
   constructor(message = "Validation Fail") {
     super(ErrorType.VALIDATION_FAIL, message);
   }
 }
-class UnauthorizedError extends ApiError {
+export class UnauthorizedError extends ApiError {
   constructor(message = "Login Failed") {
     super(ErrorType.UNAUTHORIZED, message);
   }
 }
-class AuthFailureError extends ApiError {
+export class AuthFailureError extends ApiError {
   constructor(message = "YOU NOT LOGGED IN") {
     super(ErrorType.UNAUTHORIZED, message);
   }
 }
 
-class BadTokenError extends ApiError {
+export class BadTokenError extends ApiError {
   constructor(message = "Token is not valid") {
     super(ErrorType.BAD_TOKEN, message);
   }
 }
 
-class TokenExpiredError extends ApiError {
+export class TokenExpiredError extends ApiError {
   constructor(message = "Token is expired") {
     super(ErrorType.TOKEN_EXPIRED, message);
   }
 }
-class AccessTokenError extends ApiError {
+export class AccessTokenError extends ApiError {
   constructor(message = "Invalid access token") {
     super(ErrorType.TOKEN_EXPIRED, message);
   }
 }
-
-module.exports = {
-  ApiError,
-  NoDataError,
-  NotFoundError,
-  BadRequestError,
-  UnauthorizedError,
-  ValidationError,
-  AuthFailureError,
-  BadTokenError,
-  TokenExpiredError,
-  AccessTokenError,
-};

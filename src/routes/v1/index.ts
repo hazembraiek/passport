@@ -1,7 +1,8 @@
-const express = require("express");
-const login = require("./access/login");
-const signup = require("./access/signup");
-const logout = require("./access/logout");
+import express from "express";
+import login from "./access/login";
+import logout from "./access/logout";
+import signup from "./access/signup";
+
 const router = express.Router();
 
 const defaultRoutes = [
@@ -23,4 +24,4 @@ defaultRoutes.forEach((route) => {
   router.use(route.path, route.route);
 });
 
-module.exports = router;
+export default router;
