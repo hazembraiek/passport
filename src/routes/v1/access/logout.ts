@@ -4,6 +4,6 @@ import authentication from "../../../auth/authentication";
 
 const route = express.Router();
 
-route.route("/").post(authentication, logout);
+route.route("/").delete(authentication, logout);
 
 export default route;

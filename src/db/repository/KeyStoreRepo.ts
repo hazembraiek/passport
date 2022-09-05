@@ -30,21 +30,29 @@ const deleteExpiresCodes = async (userId: ObjectId) => {
   });
 };
 
-const create = async(data:KeyStore) : Promise<KeyStore | null> => {
-  return await KeyStoreModel.create(data)
-}
+const deleteRefrechByUserId = async (userId: ObjectId) => {
+  return await KeyStoreModel.deleteMany({
+    client: userId,
+  });
+};
 
-const findOne = async (query : FilterQuery<KeyStore>):Promise<KeyStore | null> =>  {
+const create = async (data: KeyStore): Promise<KeyStore | null> => {
+  return await KeyStoreModel.create(data);
+};
+
+const findOne = async (
+  query: FilterQuery<KeyStore>
+): Promise<KeyStore | null> => {
   return await KeyStoreModel.findOne(query);
-}
-
+};
 
 const keyStoreRepository = {
   createVerification,
   getVerification,
   deleteExpiresCodes,
+  deleteRefrechByUserId,
   create,
-  findOne
+  findOne,
 };
 
 export default keyStoreRepository;

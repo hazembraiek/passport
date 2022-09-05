@@ -17,18 +17,21 @@ export const getAccessToken = (authorization: string) => {
   return authorization.split(" ")[1];
 };
 
-export const createAccessToken = (params:any) => {
+export const createAccessToken = (params: any) => {
   let access_token;
-  if (params.expiresIn) 
-    access_token = jwt.sign(params.payload, params.secret, { expiresIn:params.expiresIn });
-  else 
-    access_token = jwt.sign(params.payload, params.secret);
-  if (!access_token) 
-    throw new BadRequestError("cannot generate token");
+  if (params.expiresIn)
+    access_token = jwt.sign(params.payload, params.secret, {
+      expiresIn: params.expiresIn,
+    });
+  else access_token = jwt.sign(params.payload, params.secret);
+  if (!access_token) throw new BadRequestError("cannot generate token");
   return access_token;
 };
 
-export const verifyToken = async (token: string,secret: jwt.Secret): Promise<User> => {
+export const verifyToken = async (
+  token: string,
+  secret: jwt.Secret
+): Promise<User> => {
   try {
     return verify(token, secret) as User;
   } catch (e) {

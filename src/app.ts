@@ -24,4 +24,3 @@ app.use(errorHandler);
 app.listen(port, () => {
   console.log(`app run on port ${port}`);
 });
-
